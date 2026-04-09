@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעקב השקעות</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <span class="header-icon">📈</span>
+            <h1>מעקב השקעות</h1>
+        </div>
+        <button class="btn-icon" onclick="toggleSettings()">⚙️ הגדרות API</button>
+    </header>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel hidden">
+        <div class="settings-inner">
+            <h3>מפתח API — Finnhub</h3>
+            <p>נדרש לשליפת מחירים בזמן אמת. <a href="https://finnhub.io/register" target="_blank">הרשמה חינמית ב-Finnhub</a></p>
+            <div class="input-row">
+                <input type="text" id="apiKeyInput" placeholder="הכנס מפתח API..." autocomplete="off">
+                <button class="btn-primary" onclick="saveApiKey()">שמור</button>
+            </div>
+            <span id="apiKeyStatus"></span>
+        </div>
+    </div>
+
+    <div class="app-layout">
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">התיקים שלי</span>
+                <button class="btn-new-portfolio" onclick="createPortfolio()" title="צור תיק חדש">+</button>
+            </div>
+
+            <ul class="portfolio-list" id="portfolioList">
+                <!-- Rendered by JS -->
+            </ul>
+
+            <div class="sidebar-summary-btn">
+                <button id="summaryBtn" class="sidebar-item" onclick="showSummary()">
+                    <span class="sidebar-item-icon">📊</span>
+                    <span>סיכום כולל</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="mainContent">
+            <!-- Rendered by JS -->
+        </main>
+
+    </div>
+
+    <!-- Modal: New / Rename Portfolio -->
+    <div id="modalOverlay" class="modal-overlay hidden" onclick="closeModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3 id="modalTitle">תיק חדש</h3>
+            <input type="text" id="modalInput" placeholder="שם התיק..." maxlength="40">
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="confirmModal()">אישור</button>
+                <button class="btn-secondary" onclick="closeModal()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Hidden file input for Excel upload -->
+    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none"
+           onchange="handleExcelUpload(event)">
+</body>
+</html>
