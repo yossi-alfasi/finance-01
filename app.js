@@ -918,11 +918,11 @@ function processExcelBuffer(buffer) {
                              : NaN;
 
                 if (isNaN(quantity) || quantity <= 0) {
-                    errorDetails.push(`שורה ${i+1}: כמות לא תקינה`);
+                    errorDetails.push(`שורה ${i+1} (${String(row[colSymbol]||'').trim()}): כמות לא תקינה`);
                     errors++; return;
                 }
-                if (isNaN(buyPrice) || buyPrice <= 0) {
-                    errorDetails.push(`שורה ${i+1}: מחיר לא תקין`);
+                if (isNaN(buyPrice) || buyPrice < 0) {
+                    errorDetails.push(`שורה ${i+1} (${String(row[colSymbol]||'').trim()}): מחיר לא תקין`);
                     errors++; return;
                 }
 
