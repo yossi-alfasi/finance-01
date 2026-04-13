@@ -369,7 +369,7 @@ function buildStocksTable(p) {
                 fromBuyClass = s.changeFromBuyPct > 0 ? 'positive' : s.changeFromBuyPct < 0 ? 'negative' : 'neutral';
             }
             if (!isNaN(s.valueInCurrency) && s.valueInCurrency > 0) {
-                value = fmtCurrency(s.valueInCurrency, currency);
+                value = fmtCurrency(s.valueInCurrency, s.valueCurrency || currency);
             }
             // Use broker's own P&L calculation (שינוי מרכישה) — most accurate
             if (!isNaN(s.pnlFromBroker)) {
@@ -654,7 +654,7 @@ function isILS(currency) {
 function portCurrency(p) {
     const counts = {};
     (p.stocks || []).forEach(s => {
-        const c = s.currency || 'USD';
+        const c = s.valueCurrency || s.currency || 'USD';
         counts[c] = (counts[c] || 0) + 1;
     });
     const entries = Object.entries(counts);
@@ -858,6 +858,8 @@ function processExcelBuffer(buffer) {
             const colLastPrice       = findCol(COL_LAST_PRICE);
             const colChangeFromBuy   = findCol(COL_CHANGE_FROM_BUY);
             const colValue           = findCol(COL_VALUE);
+            // שווי אחזקה (without במטבע הנייר) is the ILS-converted total value from the broker
+            const valueColIsILS      = colValue === normH('שווי אחזקה');
             const colChangeFromCost  = findCol(COL_CHANGE_FROM_COST);
             // Exact-only match for שינוי מרכישה (absolute P&L) to avoid matching %שינוי מרכישה
             const colPnlAbs = headers.find(h => COL_PNL_ABS.map(c => normH(c)).includes(h));
@@ -938,17 +940,18 @@ function processExcelBuffer(buffer) {
                 const lastPrice         = !isNaN(lastPriceRaw) ? lastPriceRaw : NaN;
                 const changeFromBuyPct  = colChangeFromBuy  ? parseNum(row[colChangeFromBuy])  : NaN;
                 const valueInCurrency   = !isNaN(valueRaw)  ? valueRaw  : NaN;
+                const valueCurrency     = valueColIsILS ? 'ILS' : currency;
                 const changeFromCostPct = colChangeFromCost ? parseNum(row[colChangeFromCost]) : NaN;
                 const pnlFromBroker     = colPnlAbs         ? parseNum(row[colPnlAbs])         : NaN;
 
                 const existing = p.stocks.find(s => s.symbol === symbol);
                 if (existing) {
                     // Update existing stock with fresh broker data (don't duplicate)
-                    Object.assign(existing, { quantity, buyPrice, buyDate, name, currency,
+                    Object.assign(existing, { quantity, buyPrice, buyDate, name, currency, valueCurrency,
                         lastPrice, changeFromBuyPct, valueInCurrency, changeFromCostPct, pnlFromBroker });
                     skipped++;
                 } else {
-                    p.stocks.push({ symbol, quantity, buyPrice, buyDate, name, currency,
+                    p.stocks.push({ symbol, quantity, buyPrice, buyDate, name, currency, valueCurrency,
                         lastPrice, changeFromBuyPct, valueInCurrency, changeFromCostPct, pnlFromBroker });
                     newSymbols.push(symbol);
                     added++;
