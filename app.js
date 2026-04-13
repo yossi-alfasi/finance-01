@@ -661,11 +661,16 @@ function isILS(currency) {
         || c === 'ש"ח' || c === 'שח' || c.includes('שקל');
 }
 
-// Determine dominant currency of a portfolio (most common among stocks)
+// Determine display currency of a portfolio
 function portCurrency(p) {
+    // Explicit broker currency set at import time
+    if (p.brokerCurrency) return p.brokerCurrency;
+    // Any stock with ILS valueCurrency → whole portfolio in ILS
+    if ((p.stocks || []).some(s => s.valueCurrency === 'ILS')) return 'ILS';
+    // Fallback: majority native currency
     const counts = {};
     (p.stocks || []).forEach(s => {
-        const c = s.valueCurrency || s.currency || 'USD';
+        const c = s.currency || 'USD';
         counts[c] = (counts[c] || 0) + 1;
     });
     const entries = Object.entries(counts);
