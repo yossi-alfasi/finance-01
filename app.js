@@ -794,12 +794,15 @@ function processExcelBuffer(buffer) {
                                    ...COL_PNL_ABS];
             const ALL_KNOWN_NORM = ALL_KNOWN.map(k => normH(k));
 
-            // Scan rows to find the header row (using normH to handle invisible Unicode chars)
+            // Scan ALL rows — pick the one with the MOST exact header matches.
+            // Using exact match only (not partial) to avoid false positives like
+            // "מספר ניירות" matching "מספר נייר".
             let headerRowIdx = -1;
+            let bestMatchCount = 1; // row must beat this to qualify (so minimum = 2)
             for (let i = 0; i < allRows.length; i++) {
                 const cells = allRows[i].map(c => normH(String(c)));
-                const matches = cells.filter(c => ALL_KNOWN_NORM.includes(c) || ALL_KNOWN_NORM.some(k => c.includes(k)));
-                if (matches.length >= 2) { headerRowIdx = i; break; }
+                const matches = cells.filter(c => c && ALL_KNOWN_NORM.includes(c));
+                if (matches.length > bestMatchCount) { bestMatchCount = matches.length; headerRowIdx = i; }
             }
 
             if (headerRowIdx === -1) {
