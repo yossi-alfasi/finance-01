@@ -211,7 +211,7 @@ function renderMain() {
 
 // ===== Portfolio Page HTML =====
 function buildPortfolioPage(p) {
-    const cur = portCurrency(p); // dominant currency of this portfolio
+    const cur = p.brokerCurrency || portCurrency(p); // brokerCurrency set at import time takes priority
 
     // Calc summary numbers
     let totalInvested = 0, totalCurrent = 0, hasLivePrices = false;
@@ -461,7 +461,7 @@ function buildSummaryPage() {
     let blocks = '';
 
     state.portfolios.forEach(p => {
-        const pCur = portCurrency(p);
+        const pCur = p.brokerCurrency || portCurrency(p);
         let inv = 0, cur = 0, hasLive = false;
         p.stocks.forEach(s => {
             inv += (!isNaN(s.pnlFromBroker) && !isNaN(s.valueInCurrency) && s.valueInCurrency > 0)
@@ -875,6 +875,8 @@ function processExcelBuffer(buffer) {
             const colValue           = findCol(COL_VALUE);
             // שווי אחזקה (without במטבע הנייר) is the ILS-converted total value from the broker
             const valueColIsILS      = colValue === normH('שווי אחזקה');
+            // Persist broker currency on the portfolio so display is correct even without re-import
+            if (valueColIsILS) p.brokerCurrency = 'ILS';
             const colChangeFromCost  = findCol(COL_CHANGE_FROM_COST);
             // Exact-only match for שינוי מרכישה (absolute P&L) to avoid matching %שינוי מרכישה
             const colPnlAbs = headers.find(h => COL_PNL_ABS.map(c => normH(c)).includes(h));
