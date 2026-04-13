@@ -335,8 +335,10 @@ function buildStocksTable(p) {
         const invested = (!isNaN(s.pnlFromBroker) && !isNaN(s.valueInCurrency) && s.valueInCurrency > 0)
             ? s.valueInCurrency - s.pnlFromBroker
             : s.quantity * s.buyPrice;
-        const currency = s.valueCurrency || p.brokerCurrency || s.currency || 'USD';
-        const name     = s.name     || s.symbol;
+        const priceCurrency = s.currency || 'USD';                              // מטבע נטיבי לשערים (USD/ILS)
+        const valueCur      = s.valueCurrency || p.brokerCurrency || priceCurrency; // מטבע לשווי (ILS כשהבנק המיר)
+        const currency      = priceCurrency; // backward-compat for live price branch
+        const name          = s.name || s.symbol;
 
         // --- Main row values ---
         let lastPriceCell = isLoad ? '<span class="loading-cell">טוען…</span>' : '—';
@@ -371,14 +373,14 @@ function buildStocksTable(p) {
                 dayPct   = (pd.changePercent >= 0 ? '+' : '') + pd.changePercent.toFixed(2) + '%';
             }
             if (!isNaN(s.lastPrice) && s.lastPrice > 0) {
-                lastPriceCell = fmtCurrency(s.lastPrice, s.valueCurrency || currency) + ' <small style="opacity:.5">*</small>';
+                lastPriceCell = fmtCurrency(s.lastPrice, priceCurrency) + ' <small style="opacity:.5">*</small>';
             }
             if (!isNaN(s.changeFromBuyPct)) {
                 fromBuyPct   = (s.changeFromBuyPct >= 0 ? '+' : '') + Number(s.changeFromBuyPct).toFixed(2) + '%';
                 fromBuyClass = s.changeFromBuyPct > 0 ? 'positive' : s.changeFromBuyPct < 0 ? 'negative' : 'neutral';
             }
             if (!isNaN(s.valueInCurrency) && s.valueInCurrency > 0) {
-                value = fmtCurrency(s.valueInCurrency, s.valueCurrency || currency);
+                value = fmtCurrency(s.valueInCurrency, valueCur);
             }
             // Use broker's own P&L calculation — most accurate
             if (!isNaN(s.pnlFromBroker)) {
