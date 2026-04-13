@@ -787,7 +787,14 @@ function processExcelBuffer(buffer) {
             }
 
             if (headerRowIdx === -1) {
-                showToast('לא נמצאה שורת כותרות בקובץ', 'error');
+                // Show what was actually found in the first rows to help diagnose
+                const sample = allRows.slice(0, 10)
+                    .map(r => r.map(c => normH(String(c))).filter(c => c).join(' | '))
+                    .filter(r => r)
+                    .slice(0, 4)
+                    .join('\n');
+                showToast(`לא נמצאה שורת כותרות.\nשורות שנמצאו בקובץ:\n${sample}`, 'error');
+                console.warn('Excel rows sample:', allRows.slice(0, 10));
                 return;
             }
 
