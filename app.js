@@ -777,16 +777,16 @@ function processExcelBuffer(buffer) {
                 .trim();
 
             // Known header identifiers — any of these in a row signals the header row
-            const COL_SYMBOL            = ['סימבול','סימול','symbol','ticker','מניה','stock','מס.ניע','מס. ניע','מספר ניע'];
+            const COL_SYMBOL            = ['סימבול','סימול','symbol','ticker','מניה','stock','מס.ניע','מס. ניע','מספר ניע','מספר נייר'];
             const COL_NAME              = ['שם ניע','שם נייר ערך','שם נייר','name','stock name'];
-            const COL_QTY               = ['כמות','quantity','qty','shares','מניות','יחידות'];
-            const COL_PRICE             = ['שער עלות למס','שער עלות מתאם','מחיר קנייה','מחיר','buy price','price','purchase price'];
+            const COL_QTY               = ['כמות בתיק','כמות','quantity','qty','shares','מניות','יחידות'];
+            const COL_PRICE             = ['שער עלות','שער עלות למס','שער עלות מתאם','מחיר קנייה','מחיר','buy price','price','purchase price'];
             const COL_DATE              = ['תאריך פעולה אחרונה','תאריך קנייה','תאריך','date','buy date','purchase date'];
             const COL_CURRENCY          = ['מטבע','currency','curr'];
             const COL_LAST_PRICE        = ['שער אחרון'];
             const COL_CHANGE_FROM_BUY   = ['%שינוי מרכישה','שינוי מרכישה%','% שינוי מרכישה'];
-            const COL_VALUE             = ['שווי במטבע','שווי אחזקה'];
-            const COL_CHANGE_FROM_COST  = ['%שינוי משער עלות למס','%שינוי משער עלות','שינוי משער עלות'];
+            const COL_VALUE             = ['שווי אחזקה במטבע הנייר','שווי במטבע','שווי אחזקה'];
+            const COL_CHANGE_FROM_COST  = ['שינוי מעלות %','שינוי מעלות','%שינוי משער עלות למס','%שינוי משער עלות','שינוי משער עלות'];
             const COL_PNL_ABS           = ['שינוי מרכישה'];  // absolute P&L from broker (exact match only)
             const ALL_KNOWN    = [...COL_SYMBOL, ...COL_NAME, ...COL_QTY, ...COL_PRICE, ...COL_DATE, ...COL_CURRENCY,
                                    ...COL_LAST_PRICE, ...COL_CHANGE_FROM_BUY, ...COL_VALUE, ...COL_CHANGE_FROM_COST,
