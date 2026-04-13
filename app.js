@@ -90,6 +90,16 @@ function renderSidebar() {
     const list = document.getElementById('portfolioList');
     list.innerHTML = '';
 
+    // סיכום תיקים — פריט ראשון ברשימה
+    const summaryLi = document.createElement('li');
+    summaryLi.className = 'portfolio-list-item';
+    summaryLi.innerHTML = `
+        <button class="sidebar-item ${activeId === 'summary' ? 'active' : ''}" onclick="showSummary()">
+            <span class="sidebar-item-icon">📊</span>
+            <span>סיכום תיקים</span>
+        </button>`;
+    list.appendChild(summaryLi);
+
     state.portfolios.forEach(p => {
         const li = document.createElement('li');
         li.className = 'portfolio-list-item';
@@ -104,10 +114,6 @@ function renderSidebar() {
             </div>`;
         list.appendChild(li);
     });
-
-    // Highlight summary button
-    const summaryBtn = document.getElementById('summaryBtn');
-    summaryBtn.classList.toggle('active', activeId === 'summary');
 }
 
 // ===== Navigation =====
