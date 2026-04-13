@@ -253,6 +253,7 @@ function buildPortfolioPage(p) {
                        </span>`
                     : ''}
                 <button type="button" class="btn-excel" onclick="triggerExcelUpload('${p.id}')">📂 ייבא Excel</button>
+                <button type="button" class="btn-excel-clear" onclick="clearPortfolioData('${p.id}')" title="מחק את כל נתוני התיק">🗑 נקה נתונים</button>
             </div>
             <button class="btn-secondary" onclick="refreshAll()">🔄 רענן מחירים</button>
         </div>
@@ -728,6 +729,19 @@ function clearSavedExcel(portfolioId) {
     localStorage.removeItem(`savedExcel_${portfolioId}`);
     showToast('קובץ Excel השמור נמחק');
     renderMain();
+}
+
+function clearPortfolioData(portfolioId) {
+    if (!confirm('למחוק את כל הנתונים בתיק (ניירות + קובץ שמור)?\nפעולה זו אינה הפיכה.')) return;
+    const p = state.portfolios.find(x => x.id === portfolioId);
+    if (!p) return;
+    p.stocks = [];
+    delete p.brokerCurrency;
+    localStorage.removeItem(`savedExcel_${portfolioId}`);
+    saveState();
+    renderSidebar();
+    renderMain();
+    showToast('נתוני התיק נמחקו');
 }
 
 function getExcelMeta(portfolioId) {
