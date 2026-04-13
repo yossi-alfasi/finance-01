@@ -224,11 +224,11 @@ function buildPortfolioPage(p) {
             : s.quantity * s.buyPrice;
         totalInvested += sInvested;
         const pd = prices[s.symbol];
-        if (pd && pd !== 'loading') {
+        // When broker already converted to ILS (valueCurrency='ILS'), prefer that over live USD price
+        if (pd && pd !== 'loading' && s.valueCurrency !== 'ILS') {
             totalCurrent += s.quantity * pd.price;
             hasLivePrices = true;
         } else if (!isNaN(s.valueInCurrency) && s.valueInCurrency > 0) {
-            // Fallback: use broker value for total
             totalCurrent += s.valueInCurrency;
             hasLivePrices = true;
         }
@@ -345,8 +345,11 @@ function buildStocksTable(p) {
         let dayPct        = '—', dayClass = 'neutral';
         let pnl = 0;
 
-        if (hasData) {
-            // Live API data
+        // When broker already converted to ILS, don't mix with live USD prices
+        const useLivePrice = hasData && s.valueCurrency !== 'ILS';
+
+        if (useLivePrice) {
+            // Live API data (native currency, no ILS conversion by broker)
             const cp  = pd.price;
             const cv  = s.quantity * cp;
             pnl       = cv - invested;
@@ -360,9 +363,14 @@ function buildStocksTable(p) {
             fromBuyPct    = (pp >= 0 ? '+' : '') + pp.toFixed(2) + '%';
             value         = fmtCurrency(cv, currency);
         } else {
-            // Fallback: use data imported from broker Excel
+            // Use broker Excel data (also when valueCurrency=ILS — broker's ILS value is authoritative)
+            if (hasData) {
+                // Still show day change from live data
+                dayClass = pd.change >= 0 ? 'positive' : 'negative';
+                dayPct   = (pd.changePercent >= 0 ? '+' : '') + pd.changePercent.toFixed(2) + '%';
+            }
             if (!isNaN(s.lastPrice) && s.lastPrice > 0) {
-                lastPriceCell = fmtCurrency(s.lastPrice, currency) + ' <small style="opacity:.5">*</small>';
+                lastPriceCell = fmtCurrency(s.lastPrice, s.valueCurrency || currency) + ' <small style="opacity:.5">*</small>';
             }
             if (!isNaN(s.changeFromBuyPct)) {
                 fromBuyPct   = (s.changeFromBuyPct >= 0 ? '+' : '') + Number(s.changeFromBuyPct).toFixed(2) + '%';
@@ -371,11 +379,11 @@ function buildStocksTable(p) {
             if (!isNaN(s.valueInCurrency) && s.valueInCurrency > 0) {
                 value = fmtCurrency(s.valueInCurrency, s.valueCurrency || currency);
             }
-            // Use broker's own P&L calculation (שינוי מרכישה) — most accurate
+            // Use broker's own P&L calculation — most accurate
             if (!isNaN(s.pnlFromBroker)) {
                 pnl = s.pnlFromBroker;
             } else if (!isNaN(s.valueInCurrency) && s.valueInCurrency > 0) {
-                pnl = s.valueInCurrency - invested; // fallback calculation
+                pnl = s.valueInCurrency - invested;
             }
         }
 
@@ -460,7 +468,7 @@ function buildSummaryPage() {
                 ? s.valueInCurrency - s.pnlFromBroker
                 : s.quantity * s.buyPrice;
             const pd = prices[s.symbol];
-            if (pd && pd !== 'loading') {
+            if (pd && pd !== 'loading' && s.valueCurrency !== 'ILS') {
                 cur += s.quantity * pd.price; hasLive = true;
             } else if (!isNaN(s.valueInCurrency) && s.valueInCurrency > 0) {
                 cur += s.valueInCurrency; hasLive = true;
@@ -833,20 +841,25 @@ function processExcelBuffer(buffer) {
 
             const findCol = (candidates) => {
                 const normCands = candidates.map(c => normH(c));
-                return (
-                    // 1. Exact match (both normalized)
-                    headers.find(h => normCands.includes(h)) ||
+                // Levels 1-2: iterate CANDIDATES in priority order so first candidate wins
+                for (const nc of normCands) {
+                    // 1. Exact match
+                    if (headers.includes(nc)) return nc;
+                }
+                for (const nc of normCands) {
                     // 2. Case-insensitive exact match
-                    headers.find(h => normCands.includes(h.toLowerCase())) ||
-                    // 3. Partial: header contains candidate (min 3 chars)
-                    headers.find(h => normCands.some(c => c.length >= 3 && h.includes(c))) ||
-                    // 4. % position agnostic: strip % from both sides and compare
-                    headers.find(h => normCands.some(c => {
-                        const hS = h.replace(/%/g, '').trim();
-                        const cS = c.replace(/%/g, '').trim();
-                        return cS.length >= 4 && hS === cS;
-                    }))
-                );
+                    const h = headers.find(hh => hh.toLowerCase() === nc.toLowerCase());
+                    if (h) return h;
+                }
+                // 3. Partial: header contains candidate (min 3 chars) — header order OK here
+                const partial = headers.find(h => normCands.some(c => c.length >= 3 && h.includes(c)));
+                if (partial) return partial;
+                // 4. % position agnostic
+                return headers.find(h => normCands.some(c => {
+                    const hS = h.replace(/%/g, '').trim();
+                    const cS = c.replace(/%/g, '').trim();
+                    return cS.length >= 4 && hS === cS;
+                }));
             };
 
             const colSymbol          = findCol(COL_SYMBOL);
