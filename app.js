@@ -755,10 +755,17 @@ function processExcelBuffer(buffer) {
             // Read all rows as arrays (no assumption about header row location)
             const allRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
+            // Normalize header: strip ALL invisible Unicode chars (RTL marks, zero-width, BOM, etc.)
+            // Defined FIRST so it can be used during detection as well
+            const normH = s => String(s)
+                .replace(/[\u0000-\u001f\u007f-\u009f\u00a0\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+
             // Known header identifiers — any of these in a row signals the header row
-            const COL_SYMBOL            = ['סימבול','סימול','symbol','ticker','מניה','stock'];
+            const COL_SYMBOL            = ['סימבול','סימול','symbol','ticker','מניה','stock','מס.ניע','מס. ניע','מספר ניע'];
             const COL_NAME              = ['שם ניע','שם נייר ערך','שם נייר','name','stock name'];
-            const COL_QTY               = ['כמות','quantity','qty','shares','מניות'];
+            const COL_QTY               = ['כמות','quantity','qty','shares','מניות','יחידות'];
             const COL_PRICE             = ['שער עלות למס','שער עלות מתאם','מחיר קנייה','מחיר','buy price','price','purchase price'];
             const COL_DATE              = ['תאריך פעולה אחרונה','תאריך קנייה','תאריך','date','buy date','purchase date'];
             const COL_CURRENCY          = ['מטבע','currency','curr'];
@@ -770,12 +777,13 @@ function processExcelBuffer(buffer) {
             const ALL_KNOWN    = [...COL_SYMBOL, ...COL_NAME, ...COL_QTY, ...COL_PRICE, ...COL_DATE, ...COL_CURRENCY,
                                    ...COL_LAST_PRICE, ...COL_CHANGE_FROM_BUY, ...COL_VALUE, ...COL_CHANGE_FROM_COST,
                                    ...COL_PNL_ABS];
+            const ALL_KNOWN_NORM = ALL_KNOWN.map(k => normH(k));
 
-            // Scan rows to find the header row
+            // Scan rows to find the header row (using normH to handle invisible Unicode chars)
             let headerRowIdx = -1;
             for (let i = 0; i < allRows.length; i++) {
-                const cells = allRows[i].map(c => String(c).trim());
-                const matches = cells.filter(c => ALL_KNOWN.includes(c) || ALL_KNOWN.some(k => c.includes(k)));
+                const cells = allRows[i].map(c => normH(String(c)));
+                const matches = cells.filter(c => ALL_KNOWN_NORM.includes(c) || ALL_KNOWN_NORM.some(k => c.includes(k)));
                 if (matches.length >= 2) { headerRowIdx = i; break; }
             }
 
@@ -783,12 +791,6 @@ function processExcelBuffer(buffer) {
                 showToast('לא נמצאה שורת כותרות בקובץ', 'error');
                 return;
             }
-
-            // Normalize header: strip ALL invisible Unicode chars (RTL marks, zero-width, BOM, etc.)
-            const normH = s => String(s)
-                .replace(/[\u0000-\u001f\u007f-\u009f\u00a0\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g, '')
-                .replace(/\s+/g, ' ')
-                .trim();
 
             // Build header list and data rows (using normalized keys)
             const headers  = allRows[headerRowIdx].map(c => normH(c));
@@ -851,10 +853,14 @@ function processExcelBuffer(buffer) {
             });
             console.log('דוגמת שורה ראשונה:', rows[0]);
 
-            if (!colSymbol || !colQty || !colPrice) {
-                showToast('לא נמצאו עמודות: סימול / כמות / מחיר קנייה', 'error');
+            if (!colSymbol) {
+                showToast('לא נמצאה עמודת סימול / מזהה נייר ערך', 'error');
                 return;
             }
+            // אם אין כמות — ננסה לגזור מ־שווי ÷ שער אחרון
+            const qtyDerived = !colQty && colValue && colLastPrice;
+            // אם אין מחיר קנייה — נשתמש בשער אחרון כ־fallback
+            const priceFallback = !colPrice && colLastPrice;
 
             let added = 0, skipped = 0, errors = 0;
             const newSymbols = [];
@@ -865,8 +871,6 @@ function processExcelBuffer(buffer) {
 
             rows.forEach((row, i) => {
                 const symbol   = String(row[colSymbol] || '').trim().toUpperCase();
-                const quantity = parseNum(row[colQty]);
-                const buyPrice = parseNum(row[colPrice]);
                 const rawDate  = colDate ? row[colDate] : '';
                 const buyDate  = parseExcelDate(rawDate);
 
@@ -874,20 +878,34 @@ function processExcelBuffer(buffer) {
                 if (!symbol) return;
                 if (SKIP_KEYWORDS.some(k => symbol.includes(k.toUpperCase()))) return;
 
+                const lastPriceRaw = colLastPrice ? parseNum(row[colLastPrice]) : NaN;
+                const valueRaw     = colValue     ? parseNum(row[colValue])     : NaN;
+
+                // Quantity: use column if exists, otherwise derive from שווי ÷ שער אחרון
+                let quantity = colQty ? parseNum(row[colQty])
+                             : qtyDerived && !isNaN(valueRaw) && !isNaN(lastPriceRaw) && lastPriceRaw > 0
+                               ? Math.round(valueRaw / lastPriceRaw)
+                               : NaN;
+
+                // Buy price: use column if exists, otherwise fall back to שער אחרון
+                let buyPrice = colPrice ? parseNum(row[colPrice])
+                             : priceFallback && !isNaN(lastPriceRaw) ? lastPriceRaw
+                             : NaN;
+
                 if (isNaN(quantity) || quantity <= 0) {
-                    errorDetails.push(`שורה ${i+1}: כמות לא תקינה (${row[colQty]})`);
+                    errorDetails.push(`שורה ${i+1}: כמות לא תקינה`);
                     errors++; return;
                 }
                 if (isNaN(buyPrice) || buyPrice <= 0) {
-                    errorDetails.push(`שורה ${i+1}: מחיר לא תקין (${row[colPrice]})`);
+                    errorDetails.push(`שורה ${i+1}: מחיר לא תקין`);
                     errors++; return;
                 }
 
                 const name              = colName           ? String(row[colName]           || '').trim() : '';
                 const currency          = colCurrency       ? String(row[colCurrency]       || '').trim() : '';
-                const lastPrice         = colLastPrice      ? parseNum(row[colLastPrice])      : NaN;
+                const lastPrice         = !isNaN(lastPriceRaw) ? lastPriceRaw : NaN;
                 const changeFromBuyPct  = colChangeFromBuy  ? parseNum(row[colChangeFromBuy])  : NaN;
-                const valueInCurrency   = colValue          ? parseNum(row[colValue])          : NaN;
+                const valueInCurrency   = !isNaN(valueRaw)  ? valueRaw  : NaN;
                 const changeFromCostPct = colChangeFromCost ? parseNum(row[colChangeFromCost]) : NaN;
                 const pnlFromBroker     = colPnlAbs         ? parseNum(row[colPnlAbs])         : NaN;
 
