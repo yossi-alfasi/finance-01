@@ -887,17 +887,21 @@ function processExcelBuffer(buffer) {
             const newSymbols = [];
             const errorDetails = [];
 
-            // Summary/total row keywords to skip
-            const SKIP_KEYWORDS = ['סה"כ', 'סהכ', 'total', 'סיכום', 'שורת סיכום'];
+            // Summary/total row keywords to skip (checked against symbol AND name)
+            const SKIP_KEYWORDS = ['סה"כ', 'סהכ', 'total', 'סיכום', 'שורת סיכום',
+                                   'סה"כ מניות', 'סה"כ אגח', 'סה"כ אג"ח', 'סה"כ תעודות סל',
+                                   'סה"כ קרנות', 'סה"כ ניירות ערך', 'סה"כ השקעות'];
 
             rows.forEach((row, i) => {
                 const symbol   = String(row[colSymbol] || '').trim().toUpperCase();
+                const rowName  = colName ? String(row[colName] || '').trim() : '';
                 const rawDate  = colDate ? row[colDate] : '';
                 const buyDate  = parseExcelDate(rawDate);
 
-                // Skip empty rows or summary rows
+                // Skip empty rows or summary rows (check both symbol and name columns)
                 if (!symbol) return;
                 if (SKIP_KEYWORDS.some(k => symbol.includes(k.toUpperCase()))) return;
+                if (SKIP_KEYWORDS.some(k => rowName.includes(k))) return;
 
                 const lastPriceRaw = colLastPrice ? parseNum(row[colLastPrice]) : NaN;
                 const valueRaw     = colValue     ? parseNum(row[colValue])     : NaN;
@@ -944,10 +948,6 @@ function processExcelBuffer(buffer) {
                 }
             });
 
-            if (errorDetails.length > 0) {
-                console.warn('Excel import errors:', errorDetails);
-            }
-
             saveState();
             renderSidebar();
             renderMain();
@@ -959,10 +959,14 @@ function processExcelBuffer(buffer) {
                 Promise.all(allImported.map(sym => fetchPrice(sym))).then(() => renderMain());
             }
 
-            let msg = `יובאו ${added} מניות`;
+            let msg = `יובאו ${added} ניירות`;
             if (skipped > 0) msg += ` | ${skipped} עודכנו`;
-            if (errors  > 0) msg += ` | ${errors} שגיאות — פרטים ב-Console`;
+            if (errors  > 0) {
+                const sample = errorDetails.slice(0, 3).join('\n');
+                msg += `\n${errors} שורות דולגו:\n${sample}${errorDetails.length > 3 ? '\n...' : ''}`;
+            }
             showToast(msg, added > 0 ? 'success' : (errors > 0 ? 'error' : ''));
+            if (errorDetails.length > 0) console.warn('Excel import errors:', errorDetails);
 
         } catch (err) {
             console.error(err);
