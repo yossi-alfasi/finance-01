@@ -503,7 +503,7 @@ function buildSummaryPage() {
 
     return `
     <div class="page-header">
-        <span class="page-title">📊 סיכום כולל</span>
+        <span class="page-title">📊 סיכום תיקים</span>
         <div class="header-actions">
             <span id="lastUpdated" class="last-updated"></span>
             <button class="btn-secondary" onclick="refreshAll()">🔄 רענן מחירים</button>
