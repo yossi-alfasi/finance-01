@@ -684,7 +684,8 @@ function showToast(msg, type = '') {
     el.textContent = msg;
     el.className   = 'toast' + (type ? ' ' + type : '');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.className = 'toast hidden'; }, 3000);
+    const duration = type === 'error' ? 10000 : 3000;
+    toastTimer = setTimeout(() => { el.className = 'toast hidden'; }, duration);
 }
 
 // ===== Excel Import =====
