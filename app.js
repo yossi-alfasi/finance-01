@@ -233,11 +233,21 @@ function buildPortfolioPage(p) {
 
     const pnlClass = pnl > 0 ? 'positive' : pnl < 0 ? 'negative' : '';
 
+    const _savedMeta = getExcelMeta(p.id);
     return `
     <div class="page-header">
         <span class="page-title">📁 ${escHtml(p.name)}</span>
         <div class="header-actions">
             <span id="lastUpdated" class="last-updated"></span>
+            <div class="excel-actions">
+                ${_savedMeta
+                    ? `<span class="saved-excel-group">
+                        <button type="button" class="btn-excel" onclick="reloadSavedExcel('${p.id}')" title="${escHtml(_savedMeta.filename)}">🔄 רענן מקובץ <small style="opacity:.6">${fmtDate(_savedMeta.savedAt.split('T')[0])}</small></button>
+                        <button type="button" class="btn-excel-clear" onclick="clearSavedExcel('${p.id}')" title="מחק קובץ שמור">×</button>
+                       </span>`
+                    : ''}
+                <button type="button" class="btn-excel" onclick="triggerExcelUpload('${p.id}')">📂 ייבא Excel</button>
+            </div>
             <button class="btn-secondary" onclick="refreshAll()">🔄 רענן מחירים</button>
         </div>
     </div>
@@ -265,17 +275,6 @@ function buildPortfolioPage(p) {
         <div class="add-stock-header">
             <h3>הוסף מניה לתיק</h3>
             <div class="excel-actions">
-                ${(() => {
-                    const saved = getExcelMeta(p.id);
-                    const reloadBtn = saved
-                        ? `<span class="saved-excel-group">
-                            <button type="button" class="btn-excel" onclick="reloadSavedExcel('${p.id}')" title="${escHtml(saved.filename)}">🔄 רענן מקובץ <small style="opacity:.6">${fmtDate(saved.savedAt.split('T')[0])}</small></button>
-                            <button type="button" class="btn-excel-clear" onclick="clearSavedExcel('${p.id}')" title="מחק קובץ שמור">×</button>
-                           </span>`
-                        : '';
-                    return reloadBtn;
-                })()}
-                <button type="button" class="btn-excel" onclick="triggerExcelUpload('${p.id}')">📂 ייבא מ-Excel</button>
                 <button type="button" class="btn-excel-template" onclick="downloadTemplate()">⬇️ הורד תבנית</button>
             </div>
         </div>
