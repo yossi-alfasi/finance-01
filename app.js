@@ -786,9 +786,9 @@ function processExcelBuffer(buffer) {
             const COL_CURRENCY          = ['מטבע','currency','curr'];
             const COL_LAST_PRICE        = ['שער אחרון'];
             const COL_CHANGE_FROM_BUY   = ['%שינוי מרכישה','שינוי מרכישה%','% שינוי מרכישה'];
-            const COL_VALUE             = ['שווי אחזקה במטבע הנייר','שווי במטבע','שווי אחזקה'];
+            const COL_VALUE             = ['שווי אחזקה','שווי במטבע','שווי אחזקה במטבע הנייר'];
             const COL_CHANGE_FROM_COST  = ['שינוי מעלות %','שינוי מעלות','%שינוי משער עלות למס','%שינוי משער עלות','שינוי משער עלות'];
-            const COL_PNL_ABS           = ['שינוי מרכישה'];  // absolute P&L from broker (exact match only)
+            const COL_PNL_ABS           = ['שינוי מרכישה','שינוי מעלות בש"ח'];  // absolute P&L from broker (exact match only)
             const ALL_KNOWN    = [...COL_SYMBOL, ...COL_NAME, ...COL_QTY, ...COL_PRICE, ...COL_DATE, ...COL_CURRENCY,
                                    ...COL_LAST_PRICE, ...COL_CHANGE_FROM_BUY, ...COL_VALUE, ...COL_CHANGE_FROM_COST,
                                    ...COL_PNL_ABS];
