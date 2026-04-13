@@ -334,7 +334,7 @@ function buildStocksTable(p) {
         const invested = (!isNaN(s.pnlFromBroker) && !isNaN(s.valueInCurrency) && s.valueInCurrency > 0)
             ? s.valueInCurrency - s.pnlFromBroker
             : s.quantity * s.buyPrice;
-        const currency = s.currency || 'USD';
+        const currency = s.valueCurrency || p.brokerCurrency || s.currency || 'USD';
         const name     = s.name     || s.symbol;
 
         // --- Main row values ---
