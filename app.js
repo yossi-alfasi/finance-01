@@ -1,9 +1,11 @@
 // ===== Data Model =====
 // { portfolios: [{ id, name, stocks: [{ symbol, quantity, buyPrice, buyDate }] }] }
 
+const LAST_ACTIVE_KEY = 'lastActiveId';
+
 let state       = loadState();
 let apiKey      = localStorage.getItem('apiKey') || '';
-let activeId    = state.portfolios.length > 0 ? state.portfolios[0].id : null; // current portfolio id, or 'summary'
+let activeId    = null; // current portfolio id, or 'summary'
 let prices      = {};   // { SYMBOL: { price, change, changePercent } | null | 'loading' }
 let fetching    = false;
 let modalMode   = '';   // 'create' | 'rename'
@@ -20,9 +22,17 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState();
     }
 
-    activeId = state.portfolios[0].id;
+    const storedActive = loadActiveId();
+    if (storedActive === 'summary' || state.portfolios.some(p => p.id === storedActive)) {
+        activeId = storedActive;
+    }
+    if (!activeId) {
+        activeId = state.portfolios.length > 0 ? state.portfolios[0].id : 'summary';
+    }
+
     renderSidebar();
     renderMain();
+    saveActiveId();
 
     if (apiKey) fetchAllPrices();
 
@@ -45,6 +55,18 @@ function loadState() {
 
 function saveState() {
     localStorage.setItem('appState', JSON.stringify(state));
+}
+
+function loadActiveId() {
+    return localStorage.getItem(LAST_ACTIVE_KEY);
+}
+
+function saveActiveId() {
+    if (activeId) {
+        localStorage.setItem(LAST_ACTIVE_KEY, activeId);
+    } else {
+        localStorage.removeItem(LAST_ACTIVE_KEY);
+    }
 }
 
 // ===== Settings =====
@@ -91,12 +113,14 @@ function renderSidebar() {
 // ===== Navigation =====
 function switchPortfolio(id) {
     activeId = id;
+    saveActiveId();
     renderSidebar();
     renderMain();
 }
 
 function showSummary() {
     activeId = 'summary';
+    saveActiveId();
     renderSidebar();
     renderMain();
 }
@@ -125,7 +149,8 @@ function deletePortfolio(id) {
     saveState();
 
     if (activeId === id) {
-        activeId = state.portfolios.length > 0 ? state.portfolios[0].id : null;
+        activeId = state.portfolios.length > 0 ? state.portfolios[0].id : 'summary';
+        saveActiveId();
     }
 
     renderSidebar();
@@ -154,6 +179,7 @@ function confirmModal() {
         state.portfolios.push(newP);
         saveState();
         activeId = newP.id;
+        saveActiveId();
         showToast(`תיק "${name}" נוצר`, 'success');
     } else if (modalMode === 'rename') {
         const p = state.portfolios.find(x => x.id === modalTarget);
