@@ -782,6 +782,8 @@ function processExcelBuffer(buffer) {
             // Defined FIRST so it can be used during detection as well
             const normH = s => String(s)
                 .replace(/[\u0000-\u001f\u007f-\u009f\u00a0\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g, '')
+                .replace(/[\u05F4\u201C\u201D\u00AB\u00BB]/g, '"')  // Gershayim ״ + curly/guillemet quotes → "
+                .replace(/[\u05F3\u2018\u2019\u0060\u00B4]/g, "'")  // Geresh ׳ + curly apostrophes → '
                 .replace(/\s+/g, ' ')
                 .trim();
 
