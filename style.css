@@ -504,12 +504,9 @@ tbody td {
 }
 
 .summary-portfolio-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     padding: 0.85rem 1.1rem;
-    border-bottom: 1px solid var(--border);
     background: var(--surface2);
+    border-bottom: 1px solid var(--border);
 }
 
 .summary-portfolio-name {
@@ -517,17 +514,32 @@ tbody td {
     font-size: 0.95rem;
 }
 
-.summary-portfolio-stats {
+.summary-portfolio-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 1rem 1.1rem;
+    gap: 0.5rem;
+}
+
+.summary-portfolio-card {
     display: flex;
-    gap: 1.5rem;
-    font-size: 12px;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.summary-portfolio-card .lbl {
+    font-size: 11px;
     color: var(--text-muted);
 }
 
-.summary-portfolio-stats span strong {
-    color: var(--text);
+.summary-portfolio-card .val {
+    font-size: 1rem;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
+
+.summary-portfolio-card .val.positive { color: var(--green); }
+.summary-portfolio-card .val.negative { color: var(--red); }
 
 .grand-total-row {
     background: var(--surface);

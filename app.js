@@ -471,15 +471,24 @@ function buildSummaryPage() {
         <div class="summary-portfolio-block">
             <div class="summary-portfolio-header">
                 <span class="summary-portfolio-name">📁 ${escHtml(p.name)}</span>
-                <div class="summary-portfolio-stats">
-                    <span>השקעה: <strong>${fmt(inv, pCur)}</strong></span>
-                    <span>שווי: <strong>${hasLive ? fmt(cur, pCur) : '—'}</strong></span>
-                    <span class="${cls}">רווח/הפסד: <strong>${hasLive ? (pnl >= 0 ? '+' : '') + fmt(pnl, pCur) : '—'}</strong></span>
-                    <span class="${cls}">תשואה: <strong>${hasLive ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%' : '—'}</strong></span>
-                </div>
             </div>
-            <div class="table-wrapper" style="border:none;border-radius:0;">
-                ${buildStocksTable(p)}
+            <div class="summary-portfolio-cards">
+                <div class="summary-portfolio-card">
+                    <span class="lbl">סה"כ השקעה</span>
+                    <span class="val">${fmt(inv, pCur)}</span>
+                </div>
+                <div class="summary-portfolio-card">
+                    <span class="lbl">שווי נוכחי</span>
+                    <span class="val">${hasLive ? fmt(cur, pCur) : '—'}</span>
+                </div>
+                <div class="summary-portfolio-card">
+                    <span class="lbl">רווח / הפסד</span>
+                    <span class="val ${cls}">${hasLive ? (pnl >= 0 ? '+' : '') + fmt(pnl, pCur) : '—'}</span>
+                </div>
+                <div class="summary-portfolio-card">
+                    <span class="lbl">תשואה</span>
+                    <span class="val ${cls}">${hasLive ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%' : '—'}</span>
+                </div>
             </div>
         </div>`;
     });
