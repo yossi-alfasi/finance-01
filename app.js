@@ -917,6 +917,9 @@ function processExcelBuffer(buffer) {
                              : priceFallback && !isNaN(lastPriceRaw) ? lastPriceRaw
                              : NaN;
 
+                // שורת כותרת קטגוריה (פועלים וכד') — כמות וערך ריקים, דלג בשקט
+                if ((isNaN(quantity) || quantity <= 0) && (isNaN(valueRaw) || valueRaw <= 0)) return;
+
                 if (isNaN(quantity) || quantity <= 0) {
                     errorDetails.push(`שורה ${i+1} (${String(row[colSymbol]||'').trim()}): כמות לא תקינה`);
                     errors++; return;
